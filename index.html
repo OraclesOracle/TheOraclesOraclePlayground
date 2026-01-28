@@ -697,21 +697,7 @@
         }
 
         /* Admin Access Button */
-        .admin-access {
-            position: fixed;
-            bottom: calc(90px + env(safe-area-inset-bottom));
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%);
-            border: none;
-            border-radius: 50%;
-            color: #ffffff;
-            font-size: 1.3em;
-            cursor: pointer;
-            box-shadow: 0 6px 20px rgba(244, 114, 182, 0.5);
-            z-index: 50;
-        }
+        /* Removed - Admin access now in settings menu */
     </style>
 </head>
 <body>
@@ -797,7 +783,6 @@
     <div class="filter-container">
         <div class="filter-header">
             <span class="filter-title">✨ Your Alert Preferences</span>
-            <button class="settings-btn" onclick="openSettings()">⚙️</button>
         </div>
         <div class="filter-chips" id="filterChips">
         </div>
@@ -814,7 +799,7 @@
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">⚙️ Alert Preferences</h2>
+                <h2 class="modal-title">Alert Preferences</h2>
                 <button class="close-btn" onclick="closeSettings()">×</button>
             </div>
             <div class="modal-body">
@@ -825,13 +810,14 @@
                 <div class="filter-list" id="filterList">
                 </div>
 
-                <button class="btn-secondary" onclick="clearAllNotifications()" style="background: rgba(244, 114, 182, 0.2); color: #f9a8d4; border-color: rgba(244, 114, 182, 0.4); margin-top: 30px;">🗑️ Clear All Visions</button>
+                <button class="btn-secondary" onclick="openAdminLogin()" style="background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%); color: #ffffff; margin-top: 30px;">👑 Admin Access</button>
+
+                <button class="btn-secondary" onclick="clearAllNotifications()" style="background: rgba(244, 114, 182, 0.2); color: #f9a8d4; border-color: rgba(244, 114, 182, 0.4); margin-top: 10px;">🗑️ Clear All Visions</button>
             </div>
         </div>
     </div>
 
     <button class="fab" onclick="openSettings()">⚙️</button>
-    <button class="admin-access" onclick="openAdminLogin()">👑</button>
 
     <script>
         // DEFAULT ADMIN PASSWORD - Change this after first login!
@@ -1273,28 +1259,8 @@
             }
         });
 
-        // Demo notifications (remove in production)
-        setInterval(() => {
-            const allStores = [];
-            Object.values(STORE_CONFIG).forEach(category => {
-                allStores.push(...category.stores);
-            });
-            
-            const randomStore = allStores[Math.floor(Math.random() * allStores.length)];
-            const products = [
-                'Pokémon TCG: Phantasmal Flames Elite Trainer Box',
-                'Pokémon TCG: Ascended Heroes Booster Bundle',
-                'Pokémon TCG: Premium Collection'
-            ];
-            const product = products[Math.floor(Math.random() * products.length)];
-            
-            showNotification(
-                `✨ ${product}`,
-                `The Oracle has spoken! Back in stock now!`,
-                randomStore.id,
-                `https://example.com/product`
-            );
-        }, 30000);
+        // Demo notifications removed - app will only show real Discord notifications
+        // When you add webhook URLs in admin panel, real notifications will appear here
     </script>
 </body>
 </html>
