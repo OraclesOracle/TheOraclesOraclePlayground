@@ -1040,7 +1040,20 @@
                     if (oldConfig !== newConfig) {
                         console.log('🔄 Config updated from cloud!');
                         STORE_CONFIG = data.stores;
+                        
+                        // Auto-sync filters with new config
                         initializeApp();
+                        updateUI();
+                        
+                        // Show a subtle notification to user
+                        const badge = document.getElementById('statusText');
+                        if (badge) {
+                            const originalText = badge.textContent;
+                            badge.textContent = 'Updated!';
+                            setTimeout(() => {
+                                badge.textContent = originalText;
+                            }, 2000);
+                        }
                     }
                 }
             });
@@ -1181,14 +1194,47 @@
 
         function initializeApp() {
             const savedFilters = localStorage.getItem('filters');
+            
+            // Get all current store IDs from config
+            const currentStoreIds = [];
+            Object.values(STORE_CONFIG).forEach(category => {
+                category.stores.forEach(store => {
+                    currentStoreIds.push(store.id);
+                });
+            });
+            
             if (!savedFilters) {
+                // First time - create default filters (all enabled)
                 const defaultFilters = {};
-                Object.values(STORE_CONFIG).forEach(category => {
-                    category.stores.forEach(store => {
-                        defaultFilters[store.id] = true;
-                    });
+                currentStoreIds.forEach(id => {
+                    defaultFilters[id] = true;
                 });
                 localStorage.setItem('filters', JSON.stringify(defaultFilters));
+            } else {
+                // Existing filters - sync with current config
+                const filters = JSON.parse(savedFilters);
+                let needsUpdate = false;
+                
+                // Add any new stores (default to enabled)
+                currentStoreIds.forEach(id => {
+                    if (filters[id] === undefined) {
+                        filters[id] = true;
+                        needsUpdate = true;
+                    }
+                });
+                
+                // Remove any old stores that no longer exist
+                Object.keys(filters).forEach(id => {
+                    if (!currentStoreIds.includes(id)) {
+                        delete filters[id];
+                        needsUpdate = true;
+                    }
+                });
+                
+                if (needsUpdate) {
+                    localStorage.setItem('filters', JSON.stringify(filters));
+                    console.log('🔄 Filters synced with new store config');
+                }
             }
 
             renderFilterChips();
@@ -1453,3 +1499,4 @@
     </script>
 </body>
 </html>
+
