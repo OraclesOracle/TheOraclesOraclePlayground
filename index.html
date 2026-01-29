@@ -260,6 +260,15 @@
             box-shadow: 0 0 10px #a78bfa;
         }
 
+        .status-dot.syncing {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
         .stats-bar {
             display: flex;
             gap: 15px;
@@ -311,7 +320,6 @@
             font-weight: 600;
         }
 
-        /* FIXED: Scrollable filter chips for both mouse and touch */
         .filter-chips {
             display: flex;
             gap: 8px;
@@ -321,11 +329,6 @@
             -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
             scrollbar-color: rgba(139, 92, 246, 0.5) rgba(29, 9, 51, 0.3);
-            cursor: grab;
-        }
-
-        .filter-chips:active {
-            cursor: grabbing;
         }
 
         .filter-chips::-webkit-scrollbar {
@@ -340,10 +343,6 @@
         .filter-chips::-webkit-scrollbar-thumb {
             background: rgba(139, 92, 246, 0.5);
             border-radius: 3px;
-        }
-
-        .filter-chips::-webkit-scrollbar-thumb:hover {
-            background: rgba(139, 92, 246, 0.7);
         }
 
         .filter-chip {
@@ -556,12 +555,10 @@
             padding: 20px;
         }
 
-        /* FIXED: Scrollable filter list for both mouse and touch */
         .filter-list {
             margin-top: 10px;
             max-height: 50vh;
             overflow-y: auto;
-            overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
             scrollbar-color: rgba(139, 92, 246, 0.5) rgba(29, 9, 51, 0.3);
@@ -579,10 +576,6 @@
         .filter-list::-webkit-scrollbar-thumb {
             background: rgba(139, 92, 246, 0.5);
             border-radius: 4px;
-        }
-
-        .filter-list::-webkit-scrollbar-thumb:hover {
-            background: rgba(139, 92, 246, 0.7);
         }
 
         .filter-category {
@@ -745,6 +738,21 @@
         .sync-status strong {
             color: #4ade80;
         }
+
+        .error-box {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            color: #fca5a5;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .error-box.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -767,21 +775,22 @@
 
         <div class="sync-status" id="syncStatus">
             <strong>☁️ Cloud Sync Active!</strong><br>
-            Changes automatically sync to all devices in real-time.
+            Changes sync across all devices in real-time.
         </div>
 
+        <div class="error-box" id="errorBox"></div>
+
         <div class="admin-section">
-            <h3>🔥 Firebase Setup Required</h3>
-            <div class="admin-hint">
-                <strong>⚠️ Firebase Not Configured Yet</strong><br><br>
-                To enable cloud sync across all devices:<br>
+            <h3>🔥 Firebase Setup</h3>
+            <div class="admin-hint" id="firebaseHint">
+                <strong>⚠️ Firebase Not Configured</strong><br><br>
+                To enable cloud sync:<br>
                 1. Go to <strong>console.firebase.google.com</strong><br>
-                2. Create a new project (FREE)<br>
-                3. Enable Realtime Database<br>
-                4. Copy your config and paste below<br><br>
-                See <strong>FIREBASE-SETUP.md</strong> for detailed instructions.
+                2. Create project & enable Realtime Database<br>
+                3. Paste config below<br><br>
+                See <strong>FIREBASE-SETUP.md</strong> for instructions.
             </div>
-            <textarea class="admin-input" id="firebaseConfig" placeholder='Paste Firebase config here:
+            <textarea class="admin-input" id="firebaseConfig" placeholder='Paste Firebase config:
 {
   "apiKey": "...",
   "authDomain": "...",
@@ -795,34 +804,31 @@
         </div>
 
         <div class="admin-section">
-            <h3>🔑 Change Admin Password</h3>
-            <input type="text" class="admin-input" id="newAdminPassword" placeholder="New admin password">
+            <h3>🔑 Admin Password</h3>
+            <input type="text" class="admin-input" id="newAdminPassword" placeholder="New admin password (min 6 characters)">
             <button class="admin-btn" onclick="changeAdminPassword()">Update Password</button>
-            <div class="admin-hint">💡 Default password is: <strong>admin123</strong></div>
+            <div class="admin-hint">💡 Current default: <strong>admin123</strong></div>
         </div>
 
-        <!-- Big Box Stores -->
         <div class="admin-section">
             <h3>🏬 Big Box Retailers</h3>
             <div id="bigboxStores"></div>
             <button class="add-store-btn" onclick="addStore('bigbox')">+ Add Big Box Store</button>
         </div>
 
-        <!-- Card Stores -->
         <div class="admin-section">
             <h3>🃏 Card Stores</h3>
             <div id="cardStores"></div>
             <button class="add-store-btn" onclick="addStore('card')">+ Add Card Store</button>
         </div>
 
-        <!-- Shopify Stores -->
         <div class="admin-section">
             <h3>🛍️ Shopify Stores</h3>
             <div id="shopifyStores"></div>
             <button class="add-store-btn" onclick="addStore('shopify')">+ Add Shopify Store</button>
         </div>
 
-        <button class="save-admin-btn" onclick="saveAdminSettings()">☁️ Save to Cloud (All Devices Update)</button>
+        <button class="save-admin-btn" onclick="saveAdminSettings()">☁️ Save All Changes</button>
     </div>
 
     <div class="install-prompt" id="installPrompt">
@@ -836,8 +842,8 @@
         <div class="header-top">
             <div class="app-title">🌙 The Oraclesoracle Playground</div>
             <div class="connection-badge">
-                <span class="status-dot"></span>
-                <span id="statusText">Live</span>
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Loading...</span>
             </div>
         </div>
         <div class="stats-bar">
@@ -897,30 +903,172 @@
 
     <script>
         // ===========================================
-        // FIREBASE CONFIGURATION
+        // CORE APP STATE - BULLETPROOF VERSION
         // ===========================================
         
         let firebaseApp = null;
         let database = null;
         let isFirebaseEnabled = false;
+        let ADMIN_PASSWORD = 'admin123';
+        let STORE_CONFIG = {
+            bigbox: { name: "Big Box Retailers", stores: [] },
+            card: { name: "Card Stores", stores: [] },
+            shopify: { name: "Shopify Stores", stores: [] }
+        };
+        let notifications = [];
+        let isInitialized = false;
+
+        // ===========================================
+        // FIREBASE INITIALIZATION
+        // ===========================================
         
-        // Check if Firebase config exists
-        const savedFirebaseConfig = localStorage.getItem('firebaseConfig');
-        
-        if (savedFirebaseConfig) {
+        function initFirebase() {
+            const savedConfig = localStorage.getItem('firebaseConfig');
+            
+            if (!savedConfig) {
+                console.log('⚠️ No Firebase config found');
+                setStatus('Local', false);
+                return false;
+            }
+            
             try {
-                const config = JSON.parse(savedFirebaseConfig);
+                const config = JSON.parse(savedConfig);
                 firebaseApp = firebase.initializeApp(config);
                 database = firebase.database();
                 isFirebaseEnabled = true;
-                console.log('✅ Firebase initialized successfully');
+                console.log('✅ Firebase initialized');
+                setStatus('Cloud', true);
                 document.getElementById('syncStatus')?.classList.add('show');
+                return true;
             } catch (error) {
-                console.error('Firebase initialization error:', error);
-                isFirebaseEnabled = false;
+                console.error('Firebase error:', error);
+                setStatus('Error', false);
+                return false;
             }
         }
 
+        function setStatus(text, isGood) {
+            const statusText = document.getElementById('statusText');
+            const statusDot = document.getElementById('statusDot');
+            if (statusText) statusText.textContent = text;
+            if (statusDot) {
+                statusDot.classList.toggle('syncing', !isGood);
+            }
+        }
+
+        // ===========================================
+        // DATA LOADING - SAFE & RELIABLE
+        // ===========================================
+        
+        async function loadConfig() {
+            if (isFirebaseEnabled) {
+                try {
+                    const snapshot = await database.ref('config').once('value');
+                    const data = snapshot.val();
+                    
+                    if (data) {
+                        // Load password
+                        if (data.password) {
+                            ADMIN_PASSWORD = data.password;
+                        }
+                        
+                        // Load stores - SAFE loading
+                        if (data.stores) {
+                            STORE_CONFIG = ensureStoreFormat(data.stores);
+                        }
+                        
+                        console.log('✅ Config loaded from Firebase');
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error loading config:', error);
+                }
+            }
+            
+            // Fallback: localStorage
+            const savedPassword = localStorage.getItem('adminPassword');
+            const savedStores = localStorage.getItem('storeConfig');
+            
+            if (savedPassword) ADMIN_PASSWORD = savedPassword;
+            if (savedStores) {
+                try {
+                    STORE_CONFIG = ensureStoreFormat(JSON.parse(savedStores));
+                } catch (e) {
+                    console.error('Error parsing stored config');
+                }
+            }
+            
+            return false;
+        }
+
+        // Ensures stores are always in array format
+        function ensureStoreFormat(config) {
+            const result = {};
+            
+            Object.keys(config).forEach(category => {
+                result[category] = {
+                    name: config[category].name || category,
+                    stores: []
+                };
+                
+                if (config[category].stores) {
+                    // Convert to array if it's an object
+                    if (Array.isArray(config[category].stores)) {
+                        result[category].stores = config[category].stores;
+                    } else {
+                        result[category].stores = Object.values(config[category].stores);
+                    }
+                }
+            });
+            
+            return result;
+        }
+
+        // ===========================================
+        // FIREBASE REAL-TIME SYNC
+        // ===========================================
+        
+        function setupRealtimeSync() {
+            if (!isFirebaseEnabled) return;
+            
+            database.ref('config').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) return;
+                
+                const oldConfig = JSON.stringify(STORE_CONFIG);
+                
+                if (data.stores) {
+                    STORE_CONFIG = ensureStoreFormat(data.stores);
+                }
+                if (data.password) {
+                    ADMIN_PASSWORD = data.password;
+                }
+                
+                const newConfig = JSON.stringify(STORE_CONFIG);
+                
+                if (oldConfig !== newConfig && isInitialized) {
+                    console.log('🔄 Config updated from cloud');
+                    rebuildUI();
+                    flashStatus('Updated!');
+                }
+            });
+        }
+
+        function flashStatus(text) {
+            const statusText = document.getElementById('statusText');
+            if (!statusText) return;
+            
+            const original = statusText.textContent;
+            statusText.textContent = text;
+            setTimeout(() => {
+                statusText.textContent = original;
+            }, 2000);
+        }
+
+        // ===========================================
+        // ADMIN FUNCTIONS
+        // ===========================================
+        
         function saveFirebaseConfig() {
             const configText = document.getElementById('firebaseConfig').value;
             
@@ -932,131 +1080,103 @@
             try {
                 const config = JSON.parse(configText);
                 
-                // Validate required fields
                 if (!config.apiKey || !config.databaseURL) {
-                    throw new Error('Missing required Firebase fields');
+                    throw new Error('Missing required fields');
                 }
                 
-                // Save config
                 localStorage.setItem('firebaseConfig', JSON.stringify(config));
-                
-                alert('✅ Firebase config saved!\n\nRefreshing page to connect...');
+                alert('✅ Firebase config saved!\n\nRefreshing to connect...');
                 location.reload();
-                
             } catch (error) {
-                alert('❌ Invalid Firebase config!\n\nMake sure you pasted the entire config object.');
+                alert('❌ Invalid config! Make sure you pasted the entire JSON object.');
             }
         }
 
-        // ===========================================
-        // ADMIN FUNCTIONS
-        // ===========================================
-        
-        let ADMIN_PASSWORD = 'admin123'; // Default
-        let STORE_CONFIG = {
-            bigbox: {
-                name: "Big Box Retailers",
-                stores: [
-                    { id: "bestbuy", name: "Best Buy", webhook: "" },
-                    { id: "walmart", name: "Walmart", webhook: "" },
-                    { id: "gamestop", name: "GameStop", webhook: "" },
-                    { id: "target", name: "Target", webhook: "" },
-                    { id: "amazon", name: "Amazon", webhook: "" },
-                    { id: "costco", name: "Costco", webhook: "" },
-                    { id: "samsclub", name: "Sam's Club", webhook: "" },
-                ]
-            },
-            card: {
-                name: "Card Stores",
-                stores: [
-                    { id: "cardstore1", name: "Card Store 1", webhook: "" },
-                ]
-            },
-            shopify: {
-                name: "Shopify Stores",
-                stores: [
-                    { id: "shopify1", name: "Shopify Store 1", webhook: "" },
-                ]
+        function changeAdminPassword() {
+            const newPassword = document.getElementById('newAdminPassword').value;
+            if (!newPassword || newPassword.length < 6) {
+                alert('❌ Password must be at least 6 characters');
+                return;
             }
-        };
-
-        // Load from Firebase or fallback to localStorage
-        async function loadAdminConfig() {
-            if (isFirebaseEnabled) {
-                try {
-                    const snapshot = await database.ref('config').once('value');
-                    const data = snapshot.val();
-                    
-                    if (data) {
-                        if (data.password) ADMIN_PASSWORD = data.password;
-                        if (data.stores) STORE_CONFIG = data.stores;
-                        console.log('✅ Loaded config from Firebase');
-                    }
-                } catch (error) {
-                    console.error('Error loading from Firebase:', error);
-                }
-            } else {
-                // Fallback to localStorage
-                const savedPassword = localStorage.getItem('adminPassword');
-                const savedConfig = localStorage.getItem('storeConfig');
-                
-                if (savedPassword) ADMIN_PASSWORD = savedPassword;
-                if (savedConfig) STORE_CONFIG = JSON.parse(savedConfig);
-            }
+            ADMIN_PASSWORD = newPassword;
+            alert('✅ Password will be saved when you click "Save All Changes"');
+            document.getElementById('newAdminPassword').value = '';
         }
 
-        // Save to Firebase (syncs across all devices!)
         async function saveAdminSettings() {
-            if (!isFirebaseEnabled) {
-                // Fallback to localStorage
-                localStorage.setItem('storeConfig', JSON.stringify(STORE_CONFIG));
-                localStorage.setItem('adminPassword', ADMIN_PASSWORD);
-                alert('⚠️ Saved locally only.\n\nTo sync across all devices, configure Firebase in the admin panel.');
-            } else {
+            const statusDot = document.getElementById('statusDot');
+            statusDot?.classList.add('syncing');
+            
+            // Always save locally as backup
+            localStorage.setItem('adminPassword', ADMIN_PASSWORD);
+            localStorage.setItem('storeConfig', JSON.stringify(STORE_CONFIG));
+            
+            if (isFirebaseEnabled) {
                 try {
                     await database.ref('config').set({
                         password: ADMIN_PASSWORD,
                         stores: STORE_CONFIG,
                         lastUpdated: new Date().toISOString()
                     });
-                    alert('☁️ Saved to cloud!\n\nAll devices will auto-update in seconds!');
+                    alert('☁️ Saved to cloud!\n\nAll devices will update automatically!');
                 } catch (error) {
-                    alert('❌ Error saving to cloud: ' + error.message);
+                    alert('⚠️ Saved locally but cloud sync failed.\n\nChanges are saved on this device.');
                 }
+            } else {
+                alert('💾 Saved locally!\n\nEnable Firebase for cloud sync across devices.');
             }
             
+            statusDot?.classList.remove('syncing');
             closeAdminPanel();
-            location.reload();
+            rebuildUI();
         }
 
-        // Listen for real-time updates from Firebase
-        if (isFirebaseEnabled) {
-            database.ref('config').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data && data.stores) {
-                    const oldConfig = JSON.stringify(STORE_CONFIG);
-                    const newConfig = JSON.stringify(data.stores);
-                    
-                    if (oldConfig !== newConfig) {
-                        console.log('🔄 Config updated from cloud!');
-                        STORE_CONFIG = data.stores;
-                        
-                        // Auto-sync filters with new config
-                        initializeApp();
-                        updateUI();
-                        
-                        // Show a subtle notification to user
-                        const badge = document.getElementById('statusText');
-                        if (badge) {
-                            const originalText = badge.textContent;
-                            badge.textContent = 'Updated!';
-                            setTimeout(() => {
-                                badge.textContent = originalText;
-                            }, 2000);
-                        }
-                    }
-                }
+        function renderAdminStores() {
+            ['bigbox', 'card', 'shopify'].forEach(category => {
+                const container = document.getElementById(category + 'Stores');
+                if (!container) return;
+                
+                const stores = STORE_CONFIG[category].stores || [];
+                
+                container.innerHTML = stores.map((store, index) => `
+                    <div class="store-entry">
+                        <label>Store Name</label>
+                        <input type="text" value="${store.name || ''}" onchange="updateStore('${category}', ${index}, 'name', this.value)">
+                        <label>Webhook URL</label>
+                        <input type="text" value="${store.webhook || ''}" onchange="updateStore('${category}', ${index}, 'webhook', this.value)" placeholder="https://discord.com/api/webhooks/...">
+                        <button class="remove-store-btn" onclick="removeStore('${category}', ${index})">Remove Store</button>
+                    </div>
+                `).join('');
             });
+        }
+
+        function updateStore(category, index, field, value) {
+            if (!STORE_CONFIG[category].stores[index]) {
+                STORE_CONFIG[category].stores[index] = {};
+            }
+            STORE_CONFIG[category].stores[index][field] = value;
+            if (field === 'name') {
+                STORE_CONFIG[category].stores[index].id = value.toLowerCase().replace(/[^a-z0-9]/g, '') || 'store' + Date.now();
+            }
+        }
+
+        function addStore(category) {
+            if (!STORE_CONFIG[category].stores) {
+                STORE_CONFIG[category].stores = [];
+            }
+            STORE_CONFIG[category].stores.push({
+                id: 'store' + Date.now(),
+                name: 'New Store',
+                webhook: ''
+            });
+            renderAdminStores();
+        }
+
+        function removeStore(category, index) {
+            if (confirm('Remove this store?')) {
+                STORE_CONFIG[category].stores.splice(index, 1);
+                renderAdminStores();
+            }
         }
 
         function openAdminLogin() {
@@ -1075,17 +1195,18 @@
                 closeAdminLogin();
                 openAdminPanel();
             } else {
-                alert('❌ Incorrect password!');
+                alert('❌ Incorrect password');
             }
         }
 
         function openAdminPanel() {
             document.getElementById('adminPanel').classList.add('show');
             
-            // Load Firebase config if exists
             const savedConfig = localStorage.getItem('firebaseConfig');
             if (savedConfig) {
-                document.getElementById('firebaseConfig').value = JSON.stringify(JSON.parse(savedConfig), null, 2);
+                try {
+                    document.getElementById('firebaseConfig').value = JSON.stringify(JSON.parse(savedConfig), null, 2);
+                } catch (e) {}
             }
             
             renderAdminStores();
@@ -1095,182 +1216,96 @@
             document.getElementById('adminPanel').classList.remove('show');
         }
 
-        function changeAdminPassword() {
-            const newPassword = document.getElementById('newAdminPassword').value;
-            if (newPassword && newPassword.length >= 6) {
-                ADMIN_PASSWORD = newPassword;
-                alert('✅ Password will be saved when you click "Save to Cloud"');
-                document.getElementById('newAdminPassword').value = '';
-            } else {
-                alert('❌ Password must be at least 6 characters');
-            }
-        }
-
-        function renderAdminStores() {
-            const bigboxContainer = document.getElementById('bigboxStores');
-            bigboxContainer.innerHTML = STORE_CONFIG.bigbox.stores.map((store, index) => `
-                <div class="store-entry">
-                    <label>Store Name</label>
-                    <input type="text" value="${store.name}" onchange="updateStore('bigbox', ${index}, 'name', this.value)">
-                    <label>Webhook URL</label>
-                    <input type="text" value="${store.webhook}" onchange="updateStore('bigbox', ${index}, 'webhook', this.value)" placeholder="https://discord.com/api/webhooks/...">
-                    <button class="remove-store-btn" onclick="removeStore('bigbox', ${index})">Remove Store</button>
-                </div>
-            `).join('');
-
-            const cardContainer = document.getElementById('cardStores');
-            cardContainer.innerHTML = STORE_CONFIG.card.stores.map((store, index) => `
-                <div class="store-entry">
-                    <label>Store Name</label>
-                    <input type="text" value="${store.name}" onchange="updateStore('card', ${index}, 'name', this.value)">
-                    <label>Webhook URL</label>
-                    <input type="text" value="${store.webhook}" onchange="updateStore('card', ${index}, 'webhook', this.value)" placeholder="https://discord.com/api/webhooks/...">
-                    <button class="remove-store-btn" onclick="removeStore('card', ${index})">Remove Store</button>
-                </div>
-            `).join('');
-
-            const shopifyContainer = document.getElementById('shopifyStores');
-            shopifyContainer.innerHTML = STORE_CONFIG.shopify.stores.map((store, index) => `
-                <div class="store-entry">
-                    <label>Store Name</label>
-                    <input type="text" value="${store.name}" onchange="updateStore('shopify', ${index}, 'name', this.value)">
-                    <label>Webhook URL</label>
-                    <input type="text" value="${store.webhook}" onchange="updateStore('shopify', ${index}, 'webhook', this.value)" placeholder="https://discord.com/api/webhooks/...">
-                    <button class="remove-store-btn" onclick="removeStore('shopify', ${index})">Remove Store</button>
-                </div>
-            `).join('');
-        }
-
-        function updateStore(category, index, field, value) {
-            STORE_CONFIG[category].stores[index][field] = value;
-            if (field === 'name') {
-                STORE_CONFIG[category].stores[index].id = value.toLowerCase().replace(/[^a-z0-9]/g, '');
-            }
-        }
-
-        function addStore(category) {
-            const newStore = {
-                id: `store${Date.now()}`,
-                name: `New Store ${STORE_CONFIG[category].stores.length + 1}`,
-                webhook: ''
-            };
-            STORE_CONFIG[category].stores.push(newStore);
-            renderAdminStores();
-        }
-
-        function removeStore(category, index) {
-            if (confirm('Remove this store?')) {
-                STORE_CONFIG[category].stores.splice(index, 1);
-                renderAdminStores();
-            }
-        }
-
         // ===========================================
-        // REGULAR APP FUNCTIONS
+        // UI BUILDING - SAFE & RELIABLE
         // ===========================================
         
-        let notifications = [];
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            await loadAdminConfig();
-            initializeApp();
-            loadNotifications();
-            updateUI();
-            
-            if (isIOS() && !isInStandaloneMode()) {
-                setTimeout(() => {
-                    document.getElementById('installPrompt').classList.add('show');
-                }, 2000);
-            }
-
-            if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission();
-            }
-
-            document.getElementById('adminPassword').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') loginAdmin();
-            });
-        });
-
-        function initializeApp() {
-            const savedFilters = localStorage.getItem('filters');
-            
-            // Get all current store IDs from config
-            const currentStoreIds = [];
-            Object.values(STORE_CONFIG).forEach(category => {
-                category.stores.forEach(store => {
-                    currentStoreIds.push(store.id);
-                });
-            });
-            
-            if (!savedFilters) {
-                // First time - create default filters (all enabled)
-                const defaultFilters = {};
-                currentStoreIds.forEach(id => {
-                    defaultFilters[id] = true;
-                });
-                localStorage.setItem('filters', JSON.stringify(defaultFilters));
-            } else {
-                // Existing filters - sync with current config
-                const filters = JSON.parse(savedFilters);
-                let needsUpdate = false;
-                
-                // Add any new stores (default to enabled)
-                currentStoreIds.forEach(id => {
-                    if (filters[id] === undefined) {
-                        filters[id] = true;
-                        needsUpdate = true;
-                    }
-                });
-                
-                // Remove any old stores that no longer exist
-                Object.keys(filters).forEach(id => {
-                    if (!currentStoreIds.includes(id)) {
-                        delete filters[id];
-                        needsUpdate = true;
-                    }
-                });
-                
-                if (needsUpdate) {
-                    localStorage.setItem('filters', JSON.stringify(filters));
-                    console.log('🔄 Filters synced with new store config');
-                }
-            }
-
+        function rebuildUI() {
+            const currentStoreIds = getAllStoreIds();
+            syncFilters(currentStoreIds);
             renderFilterChips();
             renderFilterList();
             updateActiveFiltersCount();
+            updateNotificationsUI();
+        }
+
+        function getAllStoreIds() {
+            const ids = [];
+            Object.values(STORE_CONFIG).forEach(category => {
+                if (category.stores && Array.isArray(category.stores)) {
+                    category.stores.forEach(store => {
+                        if (store.id) ids.push(store.id);
+                    });
+                }
+            });
+            return ids;
+        }
+
+        function syncFilters(currentIds) {
+            let filters = {};
+            
+            try {
+                const saved = localStorage.getItem('filters');
+                if (saved) filters = JSON.parse(saved);
+            } catch (e) {
+                console.error('Error parsing filters');
+            }
+            
+            // Add new stores (enabled by default)
+            currentIds.forEach(id => {
+                if (filters[id] === undefined) {
+                    filters[id] = true;
+                }
+            });
+            
+            // Remove old stores
+            Object.keys(filters).forEach(id => {
+                if (!currentIds.includes(id)) {
+                    delete filters[id];
+                }
+            });
+            
+            localStorage.setItem('filters', JSON.stringify(filters));
         }
 
         function renderFilterChips() {
             const container = document.getElementById('filterChips');
-            const filters = JSON.parse(localStorage.getItem('filters') || '{}');
+            if (!container) return;
             
+            const filters = getFilters();
             let html = '';
+            
             Object.values(STORE_CONFIG).forEach(category => {
+                if (!category.stores) return;
                 category.stores.forEach(store => {
+                    if (!store.id) return;
                     const isActive = filters[store.id] !== false;
-                    html += `<div class="filter-chip ${isActive ? 'active' : ''}" data-filter="${store.id}" onclick="toggleChip('${store.id}')">${store.name}</div>`;
+                    html += `<div class="filter-chip ${isActive ? 'active' : ''}" onclick="toggleFilter('${store.id}')">${store.name}</div>`;
                 });
             });
             
-            container.innerHTML = html;
+            container.innerHTML = html || '<div style="color: #c4b5fd; padding: 10px;">No stores configured</div>';
         }
 
         function renderFilterList() {
             const container = document.getElementById('filterList');
-            const filters = JSON.parse(localStorage.getItem('filters') || '{}');
+            if (!container) return;
             
+            const filters = getFilters();
             let html = '';
+            
             Object.values(STORE_CONFIG).forEach(category => {
+                if (!category.stores || category.stores.length === 0) return;
+                
                 html += `<div class="filter-category">${category.name}</div>`;
                 category.stores.forEach(store => {
+                    if (!store.id) return;
                     const isChecked = filters[store.id] !== false;
                     html += `
                         <div class="filter-item">
                             <span class="filter-name">${store.name}</span>
                             <label class="toggle">
-                                <input type="checkbox" ${isChecked ? 'checked' : ''} data-filter="${store.id}" onchange="updateFilter('${store.id}', this.checked)">
+                                <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="updateFilterToggle('${store.id}', this.checked)">
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
@@ -1278,148 +1313,90 @@
                 });
             });
             
-            container.innerHTML = html;
+            container.innerHTML = html || '<div style="color: #c4b5fd; padding: 20px; text-align: center;">No stores configured yet</div>';
         }
 
-        function toggleChip(filterId) {
-            const filters = JSON.parse(localStorage.getItem('filters') || '{}');
-            filters[filterId] = !filters[filterId];
+        function getFilters() {
+            try {
+                const saved = localStorage.getItem('filters');
+                return saved ? JSON.parse(saved) : {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function toggleFilter(storeId) {
+            const filters = getFilters();
+            filters[storeId] = !filters[storeId];
             localStorage.setItem('filters', JSON.stringify(filters));
-            
             renderFilterChips();
             renderFilterList();
             updateActiveFiltersCount();
-            updateUI();
+            updateNotificationsUI();
         }
 
-        function updateFilter(filterId, checked) {
-            const filters = JSON.parse(localStorage.getItem('filters') || '{}');
-            filters[filterId] = checked;
+        function updateFilterToggle(storeId, checked) {
+            const filters = getFilters();
+            filters[storeId] = checked;
             localStorage.setItem('filters', JSON.stringify(filters));
-            
             renderFilterChips();
             updateActiveFiltersCount();
-            updateUI();
+            updateNotificationsUI();
         }
 
         function updateActiveFiltersCount() {
-            const filters = JSON.parse(localStorage.getItem('filters') || '{}');
-            const activeCount = Object.values(filters).filter(v => v).length;
-            document.getElementById('activeFilters').textContent = activeCount;
+            const filters = getFilters();
+            const count = Object.values(filters).filter(v => v).length;
+            const el = document.getElementById('activeFilters');
+            if (el) el.textContent = count;
         }
 
-        function isIOS() {
-            return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        }
-
-        function isInStandaloneMode() {
-            return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-        }
-
+        // ===========================================
+        // NOTIFICATIONS
+        // ===========================================
+        
         function loadNotifications() {
-            const saved = localStorage.getItem('notifications');
-            if (saved) {
-                notifications = JSON.parse(saved).map(n => ({
-                    ...n,
-                    timestamp: new Date(n.timestamp)
-                }));
+            try {
+                const saved = localStorage.getItem('notifications');
+                if (saved) {
+                    notifications = JSON.parse(saved).map(n => ({
+                        ...n,
+                        timestamp: new Date(n.timestamp)
+                    }));
+                }
+            } catch (e) {
+                notifications = [];
             }
         }
 
         function saveNotifications() {
-            localStorage.setItem('notifications', JSON.stringify(notifications));
-        }
-
-        function showNotification(title, message, storeId, url) {
-            const filters = JSON.parse(localStorage.getItem('filters') || '{}');
-            
-            if (filters[storeId] === false) return;
-            
-            let storeName = storeId;
-            Object.values(STORE_CONFIG).forEach(category => {
-                const store = category.stores.find(s => s.id === storeId);
-                if (store) storeName = store.name;
-            });
-            
-            const notification = {
-                id: Date.now(),
-                title,
-                message,
-                retailer: storeName,
-                url,
-                timestamp: new Date()
-            };
-            
-            notifications.unshift(notification);
-            if (notifications.length > 100) {
-                notifications = notifications.slice(0, 100);
-            }
-            
-            saveNotifications();
-            updateUI();
-            
-            if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification(`🌙 ${title}`, {
-                    body: message,
-                    icon: 'icon-192.png',
-                    tag: 'oracle-' + notification.id,
-                    vibrate: [200, 100, 200]
-                });
-            }
-            
-            playSound();
-        }
-
-        function playSound() {
             try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                
-                const frequencies = [523.25, 659.25, 783.99];
-                
-                frequencies.forEach((freq, index) => {
-                    const oscillator = audioContext.createOscillator();
-                    const gainNode = audioContext.createGain();
-                    
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioContext.destination);
-                    
-                    oscillator.frequency.value = freq;
-                    oscillator.type = 'sine';
-                    
-                    const startTime = audioContext.currentTime + (index * 0.05);
-                    gainNode.gain.setValueAtTime(0.5, startTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.8);
-                    
-                    oscillator.start(startTime);
-                    oscillator.stop(startTime + 0.8);
-                });
-            } catch (e) {}
+                localStorage.setItem('notifications', JSON.stringify(notifications));
+            } catch (e) {
+                console.error('Error saving notifications');
+            }
         }
 
-        function updateUI() {
+        function updateNotificationsUI() {
             const container = document.getElementById('notifications');
             const totalCount = document.getElementById('totalCount');
             const todayCount = document.getElementById('todayCount');
             
-            const filters = JSON.parse(localStorage.getItem('filters') || '{}');
-            const visibleNotifications = notifications.filter(n => {
-                let storeId = null;
-                Object.values(STORE_CONFIG).forEach(category => {
-                    const store = category.stores.find(s => s.name === n.retailer);
-                    if (store) storeId = store.id;
-                });
+            if (!container) return;
+            
+            const filters = getFilters();
+            const visible = notifications.filter(n => {
+                const storeId = findStoreId(n.retailer);
                 return storeId && filters[storeId] !== false;
             });
             
-            totalCount.textContent = visibleNotifications.length;
+            if (totalCount) totalCount.textContent = visible.length;
             
             const today = new Date().toDateString();
-            const todayNotifications = visibleNotifications.filter(n => 
-                n.timestamp.toDateString() === today
-            );
-            todayCount.textContent = todayNotifications.length;
+            const todayNotifs = visible.filter(n => n.timestamp.toDateString() === today);
+            if (todayCount) todayCount.textContent = todayNotifs.length;
             
-            if (visibleNotifications.length === 0) {
+            if (visible.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon">🌙</div>
@@ -1430,7 +1407,7 @@
                 return;
             }
             
-            container.innerHTML = visibleNotifications.map(n => `
+            container.innerHTML = visible.map(n => `
                 <div class="notification-card">
                     <div class="notification-header">
                         <span class="notification-retailer">${escapeHtml(n.retailer)}</span>
@@ -1439,17 +1416,34 @@
                     <div class="notification-title">${escapeHtml(n.title)}</div>
                     <div class="notification-message">${escapeHtml(n.message)}</div>
                     <div class="notification-actions">
-                        ${n.url ? `
-                            <a href="${escapeHtml(n.url)}" target="_blank" class="action-btn primary">
-                                🛒 Shop Now
-                            </a>
-                        ` : ''}
-                        <button class="action-btn secondary" onclick="dismissNotification(${n.id})">
-                            Dismiss
-                        </button>
+                        ${n.url ? `<a href="${escapeHtml(n.url)}" target="_blank" class="action-btn primary">🛒 Shop Now</a>` : ''}
+                        <button class="action-btn secondary" onclick="dismissNotification(${n.id})">Dismiss</button>
                     </div>
                 </div>
             `).join('');
+        }
+
+        function findStoreId(storeName) {
+            for (const category of Object.values(STORE_CONFIG)) {
+                if (!category.stores) continue;
+                const store = category.stores.find(s => s.name === storeName);
+                if (store) return store.id;
+            }
+            return null;
+        }
+
+        function dismissNotification(id) {
+            notifications = notifications.filter(n => n.id !== id);
+            saveNotifications();
+            updateNotificationsUI();
+        }
+
+        function clearAllNotifications() {
+            if (confirm('Clear all visions from the Oracle?')) {
+                notifications = [];
+                saveNotifications();
+                updateNotificationsUI();
+            }
         }
 
         function escapeHtml(text) {
@@ -1469,20 +1463,10 @@
             return date.toLocaleDateString();
         }
 
-        function dismissNotification(id) {
-            notifications = notifications.filter(n => n.id !== id);
-            saveNotifications();
-            updateUI();
-        }
-
-        function clearAllNotifications() {
-            if (confirm('Clear all visions from the Oracle?')) {
-                notifications = [];
-                saveNotifications();
-                updateUI();
-            }
-        }
-
+        // ===========================================
+        // SETTINGS MODAL
+        // ===========================================
+        
         function openSettings() {
             document.getElementById('settingsModal').classList.add('show');
         }
@@ -1491,11 +1475,65 @@
             document.getElementById('settingsModal').classList.remove('show');
         }
 
-        document.getElementById('settingsModal').addEventListener('click', (e) => {
-            if (e.target.id === 'settingsModal') {
-                closeSettings();
-            }
+        document.getElementById('settingsModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'settingsModal') closeSettings();
         });
+
+        // ===========================================
+        // INITIALIZATION
+        // ===========================================
+        
+        async function initialize() {
+            console.log('🌙 Initializing app...');
+            
+            // Init Firebase
+            initFirebase();
+            
+            // Load config
+            await loadConfig();
+            
+            // Setup realtime sync
+            setupRealtimeSync();
+            
+            // Load notifications
+            loadNotifications();
+            
+            // Build UI
+            rebuildUI();
+            
+            // Mark as initialized
+            isInitialized = true;
+            
+            console.log('✅ App ready!');
+            
+            // Request notifications
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+            
+            // Show install prompt on iOS
+            if (isIOS() && !isInStandaloneMode()) {
+                setTimeout(() => {
+                    document.getElementById('installPrompt')?.classList.add('show');
+                }, 2000);
+            }
+        }
+
+        function isIOS() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        }
+
+        function isInStandaloneMode() {
+            return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+        }
+
+        // Allow Enter key in admin login
+        document.getElementById('adminPassword')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loginAdmin();
+        });
+
+        // Start the app
+        window.addEventListener('DOMContentLoaded', initialize);
     </script>
 </body>
 </html>
